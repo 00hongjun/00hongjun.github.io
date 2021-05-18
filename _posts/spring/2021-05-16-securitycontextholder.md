@@ -16,14 +16,31 @@ toc_sticky: true
 
 <img src="{{ '/assets/images/spring/spring-logo.png'}}" alt="" class="align-center">
 
-spring security의 [Authentication](https://docs.spring.io/spring-security/site/docs/current/reference/html5/#servlet-authentication)(인증)의 `SecurityContextHolder`에 대해 정리해보겠습니다.  
-Servlet Application에서 사용되는 인증을 살펴봅니다. [Reactive Applications](https://docs.spring.io/spring-security/site/docs/current/reference/html5/#reactive-applications)에 관한 정보는 링크를 확인해 주세요.
+spring security의 [Authentication](https://docs.spring.io/spring-security/site/docs/current/reference/html5/#servlet-authentication)(인증)의 `SecurityContextHolder`에 대한 겉핥기!  
+Servlet Applications에서 동작하는 인증 방식에 대해 간단하게 정리 하며 [Reactive Applications](https://docs.spring.io/spring-security/site/docs/current/reference/html5/#reactive-applications)에 관한 정보는 링크를 확인해 주세요.
+
 
 
 
 ---
+# 들어가기 전에..
+먼저 아래에서 다루지는 않지만 간단한 지식을 정리한 후 SecurityContextHolder에 대해 알아보겠습니다.  
 
-# Authentication
+스프링 시큐리티는 servlet filter를 기반으로 인증 기능을 지원합니다.  
+그리고 filter를 사용하기 때문에 servlet container안에 있는 다른 application들과 맞물려 동작할 수 있습니다.  
+spring boot의 기본 설정을 사용 한다면 `springSecurityFilterChain` filter를 자동으로 등록해 주고 이 filter를 이용하여 스프링 시큐리티의 인증과정의 전채적인 동작을 관장하게 됩니다. 
+
+이 과정에서 `DelegatingFilterProxy`라는 이름의 filter 구현체를 등록하게 되고 DelegatingFilterProxy는 다른 bean filter들에게 적업을 넘겨줍니다.  
+이때 DelegatingFilterProxy로 래핑된 `FilterChainProxy`라는 특수 filter를 제공하게 되고 `SecurityFilterChain`를 통해 다양한 filter들에게 위임 합니다.
+
+<img src="{{'/assets/images/spring/security/securityfilterchain.png'}}" alt="" class="align-center">
+
+<img src="{{'/assets/images/spring/security/delegatingfilterproxy_capture.png'}}" alt="" class="align-center">
+
+<img src="{{'/assets/images/spring/security/filterChainProxy_capture.png'}}" alt="" class="align-center">
+
+
+
 
 스프링 시큐리티의 Authentication은 여러 Component로 구성되어 있으며, 이 Component 등이 서로 엮여 인증과 인가를 검증하게 됩니다.  
 주요 Component는 아래와 같습니다.
@@ -45,12 +62,11 @@ Servlet Application에서 사용되는 인증을 살펴봅니다. [Reactive Appl
 
 <img src="{{'/assets/images/spring/security/securitycontextholder.png'}}" alt="" class="align-center">
 
-위 사진에 보이는 것과 같이 `SecurityContextHolder` 안에는 `SecurityContext`가 포함되어 있습니다.  
-아래에서 살펴보겠지만 SecurityContext는 인증 정보를 가지고 있고, SecurityContextHolder는 ThreadLocal에 접근 가능하기 때문에 SecurityContextHolder를 이용하여 인증 정보에 접근이 가능하게 됩니다.
-즉 user의 인증 여부를 판단하려면 이 SecurityContextHolder를 이용하면 됩니다.   
+시큐리티의 메인이라고 할 수 있는 SecurityContextHolder입니다.  
+`SecurityContextHolder`는 시큐리티가 인증한 내용들을 가지고 있으며, `SecurityContext`를 포함하고 있고 SecurityContext를 현재 스레드와 연결해 주는 역할을 합니다.  
+`ThreadLocal`의 전략을 SecurityContextHolder에서 설정 할 수 있습니다.
 
-실제 코드를 예시로 SecurityContextHolder를 이용해 인증 정보를 확인해 보겠습니다.  
-docs에서는 아래와 같이 Context를 생성해보는 예제를 보여주지만, spring boot를 사용한다면 SecurityContextHolder를 따로 생성할 필요는 없습니다.
+docs에서는 아래와 같이 SecurityContext 생성과 Authentication 생성을 보여주지만 설명은 일단 패스!
 ```java
 SecurityContext context = SecurityContextHolder.createEmptyContext(); 
 Authentication authentication =
@@ -59,6 +75,24 @@ context.setAuthentication(authentication);
 
 SecurityContextHolder.setContext(context); 
 ```
+
+<br>
+
+시큐리티를 사용하는 이유중 하나는 인증된 사용자 정보를 확인하는것 일것이고, 인증된 사용자의 정보는 아래와 같이 SecurityContextHolder를 통해 확인이 가능 합니다.
+
+```java
+SecurityContext context = SecurityContextHolder.getContext();
+Authentication authentication = context.getAuthentication();
+String username = authentication.getName();
+Object principal = authentication.getPrincipal();
+Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+Object credentials = authentication.getCredentials();
+boolean authenticated = authentication.isAuthenticated();
+```
+
+시큐리티는 같은 thread의 application 내에서 어디서든 SecurityContextHolder의 인증 정보를 확인 가능하도록 구현 되어 있습니다.  
+어디서든 인증 정보를 확인 가능하도록 도와주는 개념이 `ThreadLocal`입니다.
+
 
 ## ThreadLocal
 
