@@ -218,6 +218,7 @@ ProviderManager는 인증 확인을 수행할 수 있는 AuthenticationProvider�
 
 <img src="{{'/assets/images/spring/security/providermanagers-parent.png'}}" alt="" class="align-center">
 
+## eraseCredentialsAfterAuthentication
 위의 ThreadLocal 설명 부분에서 요청 처리가 완료된 thread의 인증 정보는 FilterChainProxy가 clear 한다고 하였는데요.  
 이 clear 하는 역할을 ProviderManager에서 하는 것으로 보입니다.  
 ProviderManager는 Authentication에서 반환된 인증에 성공한 객체에서 인증 정보를 clear 하고 이로 인해 암호와 같은 인증 정보가 HttpSession에서 필요한 시간보다 오래 보존되지 않는 장점이 있습니다.  
