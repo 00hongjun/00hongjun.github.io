@@ -17,7 +17,7 @@ toc_sticky: true
 <img src="{{ '/assets/images/spring/spring-logo.png'}}" alt="" class="align-center">
 
 spring security의 [Authentication](https://docs.spring.io/spring-security/site/docs/current/reference/html5/#servlet-authentication)(인증)의 `SecurityContextHolder`에 대한 겉핥기!  
-Servlet Applications에서 동작하는 인증 방식에 대해 간단하게 정리 하며 [Reactive Applications](https://docs.spring.io/spring-security/site/docs/current/reference/html5/#reactive-applications)에 관한 정보는 링크를 확인해 주세요.
+Servlet Applications에서 동작하는 인증 방식에 대해 간단하게 정리하며 [Reactive Applications](https://docs.spring.io/spring-security/site/docs/current/reference/html5/#reactive-applications)에 관한 정보는 링크를 확인해 주세요.
 
 
 
@@ -27,11 +27,11 @@ Servlet Applications에서 동작하는 인증 방식에 대해 간단하게 정
 먼저 아래에서 다루지는 않지만 간단한 지식을 정리한 후 SecurityContextHolder에 대해 알아보겠습니다.  
 
 스프링 시큐리티는 servlet filter를 기반으로 인증 기능을 지원합니다.  
-그리고 filter를 사용하기 때문에 servlet container안에 있는 다른 application들과 맞물려 동작할 수 있습니다.  
-spring boot의 기본 설정을 사용 한다면 `springSecurityFilterChain` filter를 자동으로 등록해 주고 이 filter를 이용하여 스프링 시큐리티의 인증과정의 전채적인 동작을 관장하게 됩니다. 
+그리고 filter를 사용하기 때문에 servlet container 안에 있는 다른 application 들과 맞물려 동작할 수 있습니다.  
+spring boot의 기본 설정을 사용한다면 `springSecurityFilterChain` filter를 자동으로 등록해 주고 이 filter를 이용하여 스프링 시큐리티의 인증 과정의 전체적인 동작을 관장하게 됩니다. 
 
 이 과정에서 `DelegatingFilterProxy`라는 이름의 filter 구현체를 등록하게 되고 DelegatingFilterProxy는 다른 bean filter들에게 적업을 넘겨줍니다.  
-이때 DelegatingFilterProxy로 래핑된 `FilterChainProxy`라는 특수 filter를 제공하게 되고 `SecurityFilterChain`를 통해 다양한 filter들에게 위임 합니다.
+이때 DelegatingFilterProxy로 래핑된 `FilterChainProxy`라는 특수 filter를 제공하게 되고 `SecurityFilterChain`를 통해 다양한 filter들에게 위임합니다.
 
 <img src="{{'/assets/images/spring/security/securityfilterchain.png'}}" alt="" class="align-center">
 
@@ -64,7 +64,7 @@ spring boot의 기본 설정을 사용 한다면 `springSecurityFilterChain` fil
 
 시큐리티의 메인이라고 할 수 있는 SecurityContextHolder입니다.  
 `SecurityContextHolder`는 시큐리티가 인증한 내용들을 가지고 있으며, `SecurityContext`를 포함하고 있고 SecurityContext를 현재 스레드와 연결해 주는 역할을 합니다.  
-`ThreadLocal`의 전략을 SecurityContextHolder에서 설정 할 수 있습니다.
+`ThreadLocal`의 전략을 SecurityContextHolder에서 설정할 수 있습니다.
 
 docs에서는 아래와 같이 SecurityContext 생성과 Authentication 생성을 보여주지만 설명은 일단 패스!
 ```java
@@ -78,7 +78,7 @@ SecurityContextHolder.setContext(context);
 
 <br>
 
-시큐리티를 사용하는 이유중 하나는 인증된 사용자 정보를 확인하는것 일것이고, 인증된 사용자의 정보는 아래와 같이 SecurityContextHolder를 통해 확인이 가능 합니다.
+시큐리티를 사용하는 이유 중 하나는 인증된 사용자 정보를 확인하는 것 일 것이고, 인증된 사용자의 정보는 아래와 같이 SecurityContextHolder를 통해 확인이 가능합니다.
 
 ```java
 SecurityContext context = SecurityContextHolder.getContext();
@@ -90,24 +90,27 @@ Object credentials = authentication.getCredentials();
 boolean authenticated = authentication.isAuthenticated();
 ```
 
-시큐리티는 같은 thread의 application 내에서 어디서든 SecurityContextHolder의 인증 정보를 확인 가능하도록 구현 되어 있습니다.  
+시큐리티는 같은 thread의 application 내에서 어디서든 SecurityContextHolder의 인증 정보를 확인 가능하도록 구현되어 있습니다.  
 어디서든 인증 정보를 확인 가능하도록 도와주는 개념이 `ThreadLocal`입니다.
 
 
 ## ThreadLocal
 
-SecurityContextHolder은 `ThreadLocal`을 이용하여 인증 관련된 정보를 저장합니다.  
+SecurityContextHolder은 `ThreadLocal`을 이용하여 인증 관련된 정보(principal, credentials, authenticated)를 저장합니다.  
 ThreadLocal에 정보를 저장하여 관리하기 때문에 동일 스레드에서는 항상 같은 인증 정보로 접근 가능합니다.  
-그리고 서비스의 메서드에 SecurityContext를 parameter로 주지 않더라고 어디서나 SecurityContext에 접근 가능하게 해줍니다.  
+요청 처리가 완료된 thread의 인증 정보는 FilterChainProxy가 clear 하도록 보장하고 있습니다.
+
+
 
 application에 따라 ThreadLocal의 동작 방식을 다르게 설정할 수도 있는데요. SecurityContextHolder의 설정을 이용하여 변경 가능하며 설정값으로는 아래와 같은 값들이 있습니다. [링크](https://docs.spring.io/spring-security/site/docs/current/reference/html5/#servlet-authentication-securitycontextholder)   
 * SecurityContextHolder.MODE_THREADLOCAL (default)
 * SecurityContextHolder.MODE_INHERITABLETHREADLOCAL
 * SecurityContextHolder.MODE_GLOBAL
 
-아래는 `SecurityContextHolder.initialize()`의 구현 부분을 캡처한 사진입니다.  
+아래는 `SecurityContextHolder#initialize()`의 구현 부분을 캡처한 사진입니다.  
 
 <img src="{{'/assets/images/spring/security/securityContextHolder_strategy_init.png'}}" alt="" class="align-center">
+
 
 ---  
 
@@ -118,11 +121,13 @@ application에 따라 ThreadLocal의 동작 방식을 다르게 설정할 수도
 <img src="{{'/assets/images/spring/security/securitycontextholder.png'}}" alt="" class="align-center">
 
 위의 사진을 다시 한번 참고하여 `SecurityContext`에 대해 알아보겠습니다.  
-SecurityContext는 SecurityContextHolder를 통해 얻을 수 있으며 Authentication 객체를 가지고 있습니다.
-
+SecurityContext는 interface입니다. SecurityContextHolder를 통해 얻을 수 있으며 Authentication을 가지고 있습니다.
+Authentication에 대한 get/set()이 정의되어 있습니다.
 ```java
 SecurityContext context = SecurityContextHolder.getContext();
 ```
+<img src="{{'/assets/images/spring/security/securitycontext.png'}}" alt="" class="align-center">
+
 
 ---
 
@@ -132,11 +137,10 @@ SecurityContext context = SecurityContextHolder.getContext();
 
 자 그럼 SecurityContext가 포함하고 있다는 [Authentication](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/core/Authentication.html)라는 것은 무엇일까요?   
 <br>
-첫 번째, 현재 인증된 user를 나타냅니다. 그리고 SecurityContext를 통해 해당 인증 정보를 얻을 수 있습니다.  
-두 번째, user의 자격 증명을 제공하기 위한 AuthenticationManager에 대한 입력입니다.
+interface 이며, `AuthenticationManager.authenticate(Authentication)`에 의해 인증된 principal 또는 token을 나타냅니다.  
 
 위에 설명하였듯이 Authentication은 인증 정보를 가지고 있습니다. 그럼 인증과 권한, user id 등의 더 자세한 정보는 어떻게 확인할 수 있을까요?  
-SecurityContextHolder의 설명에 나와있던 사진에 있듯이 Authentication은 `Principal`, `credentials`, `authorities`을 가지고 있으며 이 3가지를 통해 확인이 가능합니다.  
+SecurityContextHolder의 설명에 나와있던 사진에서 알 수 있듯이 Authentication은 `Principal`, `credentials`, `authorities`을 가지고 있으며 이 3가지를 통해 확인이 가능합니다.  
 * **Principal**  
    user를 식별 하며 '누구?'에 대한 정보  
    UserDetailsService에 의해 반환된 [UserDetails](https://docs.spring.io/spring-security/site/docs/current/reference/html5/#servlet-authentication-userdetails)의 instance
@@ -154,6 +158,8 @@ Authentication authentication = context.getAuthentication();
 String username = authentication.getName();
 Object principal = authentication.getPrincipal();
 Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+Object credentials = authentication.getCredentials();
+boolean authenticated = authentication.isAuthenticated();
 ```
 
 이 코드를 실행하고 디버깅하면 아래와 같은 정보를 확인할 수 있습니다.  
@@ -161,17 +167,23 @@ Principal, authorities, credentials 3가지가 Authentication에 포함되어 �
 
 <img src="{{'/assets/images/spring/security/authentication_debug.png'}}" alt="" class="align-center">
 
+Authentication의 `Authentication#isAuthenticated()`는 AuthenticationManager에 인증 토큰을 제공해야 하는지를 AbstractSecurityInterceptor에 표시하는 데 사용됩니다.  
+true를 반환하면 모든 요청에 대해 AuthenticationManager를 더 이상 호출할 필요가 없으므로 성능이 향상됩니다.   
+토큰이 인증되었고 AbstractSecurityInterceptor가 재 인증을 위해 다시 AuthenticationManager에 토큰을 제시할 필요가 없는 경우 true입니다.
+
 ## GrantedAuthority
 
-권한을 나타내며 `Authentication#getAuthorities()`를 통해 얻을 수 있습니다.  
-위의 코드화 실행 결과를 보면 타입이 `Collection<? extends GrantedAuthority>`인 것을 확인할 수 있습니다.  GrantedAuthority의 구현체를 값으로 가지는 Collection을 반환하고 있습니다.  
-ROLE_ADMINISTRATOR, ROLE_HR_SUPERVISOR와 같이 'ROLE_' 접두사를 자동으로 붙여 역할을 나타냅니다. 
-
+Authentication에 부여된 권한을 나타내며 `Authentication#getAuthorities()`를 통해 얻을 수 있습니다.  
 ```java
 SecurityContext context = SecurityContextHolder.getContext();
 Authentication authentication = context.getAuthentication();
 Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
 ```
+위의 코드화 실행 결과를 보면 타입이 `Collection<? extends GrantedAuthority>`인 것을 확인할 수 있습니다.  GrantedAuthority의 구현체를 값으로 가지는 Collection을 반환하고 있습니다.  
+ROLE_ADMINISTRATOR, ROLE_HR_SUPERVISOR와 같이 'ROLE_' 접두사를 자동으로 붙여 역할을 나타냅니다. 
+
+<img src="{{'/assets/images/spring/security/grantedauthority.png
+'}}" alt="" class="align-center">
 
 ---
 
@@ -179,8 +191,10 @@ Collection<? extends GrantedAuthority> authorities = authentication.getAuthoriti
 
 # AuthenticationManager
 
-`AuthenticationManager`는 Spring Security의 필터에서 인증을 수행하는 방법을 정의하는 API입니다.
-일반적으로 ProviderManager를 이용하여 구현하며 `Authentication authenticate(Authentication authentication) throws AuthenticationException` 메서드 1개만 정의하고 있습니다. 이 메서드는 인자로 받은 Authentication이 유효한지 확인하고 Authentication 객체를 리턴합니다.  
+`AuthenticationManager`는 Spring Security의 filter가 인증을 수행하는 방법을 정의하는 API입니다.  
+반환된 인증은 AuthenticationManager를 호출 한 컨트롤러(\Spring Security의 filter)에 의해 SecurityContextHolder에 설정됩니다.
+
+일반적으로 ProviderManager를 이용하여 구현하며 `Authentication#authenticate()` 메서드 1개만 정의하고 있습니다. 이 메서드는 인자로 받은 Authentication이 유효한지 확인하고 Authentication 객체를 리턴합니다.  
 
 SecurityContextHolder 의해 반환된 Authentication은 AuthenticationManager에 의해 검증됩니다.  
 일반적으로 ProviderManager 구현체를 이용합니다.  
@@ -190,17 +204,23 @@ SecurityContextHolder 의해 반환된 Authentication은 AuthenticationManager�
 ## ProviderManager
 
 `ProviderManager`는 AuthenticationManager의 구현체입니다.  
-특정 인증 유형을 확인할 수 있는 `AuthenticationProvider`의 List를 가지고 있으며 이 providers를 이용해 인증을 진행합니다.
+특정 인증 유형을 확인할 수 있는 `AuthenticationProvider`의 providers list를 가지고 있습니다.  
+list에 포함된 각각의 AuthenticationProvider는 인증 성공 여부를 반환 하는 역할을 합니다.  
+
+<img src="{{'/assets/images/spring/security/providermanager.png'}}" alt="" class="align-center">
+
 
 스프링 시큐리티는 AuthenticationProvider interface를 통해 여러 유형의 인증을 지원하고 단일 인증 관리자만(ProviderManager) 노출하면서 매우 구체적인 유형의 인증을 수행할 수 있습니다.
 
-<img src="{{'/assets/images/spring/security/providerManager.png'}}" alt="" class="align-center">
+<img src="{{'/assets/images/spring/security/providermanager_authentication_list.png'}}" alt="" class="align-center">
 
 ProviderManager는 인증 확인을 수행할 수 있는 AuthenticationProvider가 없을 경우 아래 사진과 같이 상위 AuthenticationProvider를 참조할 수도 있습니다.
 
 <img src="{{'/assets/images/spring/security/providermanagers-parent.png'}}" alt="" class="align-center">
 
-ProviderManager는 Authentication에서 반환된 인증에 성공한 객체에서 인증 정보를 지우려고 합니다. 이 동작으로 인해 암호와 같은 정보가 HttpSession에서 필요한 시간보다 오래 보존되지 않는 장점이 있습니다.
+위의 ThreadLocal 설명 부분에서 요청 처리가 완료된 thread의 인증 정보는 FilterChainProxy가 clear 한다고 하였는데요.  
+이 clear 하는 역할을 ProviderManager에서 하는 것으로 보입니다.  
+ProviderManager는 Authentication에서 반환된 인증에 성공한 객체에서 인증 정보를 clear 하고 이로 인해 암호와 같은 인증 정보가 HttpSession에서 필요한 시간보다 오래 보존되지 않는 장점이 있습니다.
 
 
 ---
