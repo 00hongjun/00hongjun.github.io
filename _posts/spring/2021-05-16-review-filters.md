@@ -77,7 +77,7 @@ FilterChainProxy에 등록하면서 몇 가지 이점을 얻습니다.
 2. FilterChainProxy도 filter이기 때문에 선후 처리가 가능합니다. -> client의 요청에 대한 응답을 한 뒤 인증 관련 context를 자동으로 clear 해줍니다. 
 3. [HttpFirewall](https://docs.spring.io/spring-security/site/docs/current/reference/html5/#servlet-httpfirewall) 같이 특정 공격에 대한 기본적인 방어가 가능합니다.
 4. SecurityFilterChain의 호출 시점에 대한 유연성을 제공합니다. servlet container의 filter는 url만을 기반으로 호출됩니다.  
-FilterChainProxy를 사용함으로써 RequestMatcher 인터페이스를 활용하여 HttpServletRequest의 모든 항목을 기반으로 호출을 결정할 수 있습니다.
+FilterChainProxy를 사용함으로써 RequestMatcher 인터페이스를 활용하여 HttpServletRequest을 기반으로 호출할 filter를 결정할 수 있습니다.
 
 아래는 HttpServletRequest를 이용하여 filter list를 반환하는 `FilterChainProxy#getFilters` 메서드입니다.  
 request의 url를 비교하여 match 되는 chain을 가져옵니다.
