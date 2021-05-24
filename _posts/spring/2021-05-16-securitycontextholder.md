@@ -174,6 +174,7 @@ true를 반환하면 모든 요청에 대해 AuthenticationManager를 더 이상
 ## GrantedAuthority
 
 Authentication에 부여된 권한을 나타내며 `Authentication#getAuthorities()`를 통해 얻을 수 있습니다.  
+`GrantedAuthority`는 **AuthenticationManager에 의해 Authentication 객체에 삽입**되고 나중에 권한에 대한 결정을 내릴 때 **AccessDecisionManager가 읽어서 사용**합니다.
 ```java
 SecurityContext context = SecurityContextHolder.getContext();
 Authentication authentication = context.getAuthentication();
@@ -184,6 +185,10 @@ ROLE_ADMINISTRATOR, ROLE_HR_SUPERVISOR와 같이 'ROLE_' 접두사를 자동으�
 
 <img src="{{'/assets/images/spring/security/grantedauthority.png
 '}}" alt="" class="align-center">
+
+`getAuthority()`를 보면 String을 반환하는 것을 볼 수 있습니다.  
+AccessDecisionManager가 반환된 문자열을 통해 GrantedAuthority의 역할을 쉽게 읽고 판단하는 데 사용된다고 합니다.  
+
 
 ---
 
